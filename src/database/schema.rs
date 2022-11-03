@@ -99,13 +99,13 @@ diesel::table! {
 diesel::joinable!(messages_edits -> messages (parrent_message_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    airtable,
-    events,
-    invites,
-    messages,
-    messages_edits,
-    projects,
-    storage,
-    users,
-    warnings,
+  airtable,
+  events,
+  invites,
+  messages,
+  messages_edits,
+  projects,
+  storage,
+  users,
+  warnings,
 );
