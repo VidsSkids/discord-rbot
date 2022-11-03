@@ -190,15 +190,6 @@ pub async fn snooze_reaction(ctx: &Context, reaction: &Reaction, emoji: &str) {
   }
 }
 
-async fn snooze_send_error_message(channel: &ChannelId, message: &Message, http: &Arc<http::Http>) {
-  channel.delete_message(&http, message.id.0).await.unwrap();
-  let message = channel
-    .say(&http, "The time parameter is invalid\nTry again please")
-    .await
-    .unwrap();
-  SNOOZE_MESSAGE.lock().unwrap().push(message);
-}
-
 pub async fn snooze_message(ctx: &Context, message: &Message) {
   let message_author = message.author.id;
   let channel = message.channel_id;
@@ -242,4 +233,13 @@ pub async fn snooze_message(ctx: &Context, message: &Message) {
       snooze_send_error_message(&channel, message, &ctx.http).await;
     }
   }
+}
+
+async fn snooze_send_error_message(channel: &ChannelId, message: &Message, http: &Arc<http::Http>) {
+  channel.delete_message(&http, message.id.0).await.unwrap();
+  let message = channel
+    .say(&http, "The time parameter is invalid\nTry again please")
+    .await
+    .unwrap();
+  SNOOZE_MESSAGE.lock().unwrap().push(message);
 }
