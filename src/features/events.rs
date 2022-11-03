@@ -32,6 +32,7 @@ lazy_static! {
   )
   .expect("unable to create regex");
   static ref SNOOZE: Mutex<Vec<RemindMeSnooze>> = Mutex::new(Vec::new());
+  static ref SNOOZE_MESSAGE: Mutex<Vec<Message>> = Mutex::new(Vec::new());
 }
 
 fn extract_date(captures: &Captures) -> Option<DateTime<Tz>> {
@@ -180,10 +181,11 @@ pub async fn snooze_reaction(ctx: &Context, reaction: &Reaction, emoji: &str) {
           content: content.replace(format!("<@{}>", reaction_author.0).as_str(), ""),
         });
       }
-      channel
+      let message = channel
         .say(&ctx.http, "Enter the new duration please")
         .await
         .unwrap();
+      SNOOZE_MESSAGE.lock().unwrap().push(message);
     }
   }
 }
@@ -204,10 +206,11 @@ pub async fn snooze_message(ctx: &Context, message: &Message) {
           .delete_message(&ctx.http, message.id.0)
           .await
           .unwrap();
-        channel
+        let message = channel
           .say(&ctx.http, "The time parameter is invalid\nTry again please")
           .await
           .unwrap();
+        SNOOZE_MESSAGE.lock().unwrap().push(message);
       }
       {
         let mut db_instance = INSTANCE.write().unwrap();
@@ -222,19 +225,34 @@ pub async fn snooze_message(ctx: &Context, message: &Message) {
         .delete_message(&ctx.http, snooze.message_id)
         .await
         .unwrap();
+      message.react(&ctx.http, '✅').await.unwrap();
       SNOOZE
         .lock()
         .unwrap()
         .retain(|s| s.message_id != snooze.message_id);
+      SNOOZE_MESSAGE
+        .lock()
+        .unwrap()
+        .iter()
+        .cloned()
+        .for_each(|m| {
+          let http = ctx.http.clone();
+          if m.channel_id == channel {
+            tokio::spawn(async move {
+              channel.delete_message(http, m.id.0).await.unwrap();
+            });
+          }
+        });
     } else {
       channel
         .delete_message(&ctx.http, message.id.0)
         .await
         .unwrap();
-      channel
+      let message = channel
         .say(&ctx.http, "The time parameter is invalid\nTry again please")
         .await
         .unwrap();
+      SNOOZE_MESSAGE.lock().unwrap().push(message);
     }
   }
 }
