@@ -190,6 +190,15 @@ pub async fn snooze_reaction(ctx: &Context, reaction: &Reaction, emoji: &str) {
   }
 }
 
+async fn snooze_send_error_message(channel: &ChannelId, message: &Message, http: &Arc<http::Http>) {
+  channel.delete_message(&http, message.id.0).await.unwrap();
+  let message = channel
+    .say(&http, "The time parameter is invalid\nTry again please")
+    .await
+    .unwrap();
+  SNOOZE_MESSAGE.lock().unwrap().push(message);
+}
+
 pub async fn snooze_message(ctx: &Context, message: &Message) {
   let message_author = message.author.id;
   let channel = message.channel_id;
@@ -202,15 +211,7 @@ pub async fn snooze_message(ctx: &Context, message: &Message) {
     if let Some(captures) = TIME_INPUT_REGEX.captures(&content) {
       let trigger_date: Option<DateTime<_>> = extract_date(&captures);
       if trigger_date.is_none() {
-        channel
-          .delete_message(&ctx.http, message.id.0)
-          .await
-          .unwrap();
-        let message = channel
-          .say(&ctx.http, "The time parameter is invalid\nTry again please")
-          .await
-          .unwrap();
-        SNOOZE_MESSAGE.lock().unwrap().push(message);
+        snooze_send_error_message(&channel, message, &ctx.http).await;
       }
       {
         let mut db_instance = INSTANCE.write().unwrap();
@@ -226,33 +227,19 @@ pub async fn snooze_message(ctx: &Context, message: &Message) {
         .await
         .unwrap();
       message.react(&ctx.http, '✅').await.unwrap();
-      SNOOZE
-        .lock()
-        .unwrap()
-        .retain(|s| s.message_id != snooze.message_id);
-      SNOOZE_MESSAGE
-        .lock()
-        .unwrap()
-        .iter()
-        .cloned()
-        .for_each(|m| {
-          let http = ctx.http.clone();
-          if m.channel_id == channel {
-            tokio::spawn(async move {
-              channel.delete_message(http, m.id.0).await.unwrap();
-            });
-          }
-        });
+      let mut list_snooze = SNOOZE.lock().unwrap();
+      list_snooze.retain(|s| s.message_id != snooze.message_id);
+      let list_snooze_message = SNOOZE_MESSAGE.lock().unwrap();
+      list_snooze_message.iter().cloned().for_each(|m| {
+        let http = ctx.http.clone();
+        if m.channel_id == channel {
+          tokio::spawn(async move {
+            channel.delete_message(http, m.id.0).await.unwrap();
+          });
+        }
+      });
     } else {
-      channel
-        .delete_message(&ctx.http, message.id.0)
-        .await
-        .unwrap();
-      let message = channel
-        .say(&ctx.http, "The time parameter is invalid\nTry again please")
-        .await
-        .unwrap();
-      SNOOZE_MESSAGE.lock().unwrap().push(message);
+      snooze_send_error_message(&channel, message, &ctx.http).await;
     }
   }
 }
