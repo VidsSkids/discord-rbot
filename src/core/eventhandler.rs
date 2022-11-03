@@ -2,6 +2,7 @@ use super::process::{archive_activity, database_update, getbotid};
 use super::validation::{check_validation, WaitingValidation};
 use super::{api, slash_command};
 use crate::core::process::process_message;
+use crate::features::events::snooze_reaction;
 use crate::features::{invite_action, mecleanup, project_manager, Features};
 use log::{error, info};
 use serenity::http::CacheHttp;
@@ -111,7 +112,6 @@ impl EventHandler for Handler {
       .await
       .unwrap()
       .is_own(&ctx.cache);
-
     if reaction.user_id.unwrap() != botid && isown {
       let emoji = reaction.emoji.as_data();
       match &*emoji {
@@ -124,6 +124,9 @@ impl EventHandler for Handler {
         }
         "🧹" => {
           mecleanup::check_mecleanup(&ctx, &reaction).await;
+        }
+        "⌚" => {
+          snooze_reaction(&ctx, &reaction, &emoji).await;
         }
         _ => {}
       }

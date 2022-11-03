@@ -4,6 +4,7 @@ use super::commands::{
 };
 use super::permissions;
 use crate::database;
+use crate::features::events::snooze_message;
 use crate::features::funny::ATTACKED;
 use crate::{core::parse::split_message_args, features::gitlab_preview::gitlab_url_preview};
 use log::{debug, error};
@@ -178,6 +179,7 @@ pub async fn process_contains(message: &Message, ctx: &Context) {
       message.react(ctx, *reaction).await.unwrap();
     }
   }
+  snooze_message(ctx, message).await;
 }
 
 const CATS: [char; 12] = [

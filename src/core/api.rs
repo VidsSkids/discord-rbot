@@ -140,7 +140,7 @@ async fn get_channel_message(
 
 pub async fn run(ctx: Context) {
   const ADDRESS: &str = "0.0.0.0";
-  const PORT: u32 = 8080;
+  const PORT: u32 = 8081;
   let shutdown: rocket::config::Shutdown = rocket::config::Shutdown {
     ctrlc: false,
     ..Default::default()

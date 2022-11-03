@@ -1,4 +1,6 @@
-table! {
+// @generated automatically by Diesel CLI.
+
+diesel::table! {
     airtable (id) {
         id -> Int4,
         aid -> Varchar,
@@ -7,7 +9,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     events (id) {
         id -> Int4,
         author -> Int8,
@@ -17,7 +19,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     invites (id) {
         id -> Int4,
         code -> Varchar,
@@ -27,7 +29,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     messages (id) {
         id -> Int8,
         author -> Int8,
@@ -37,7 +39,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     messages_edits (id) {
         id -> Int4,
         author -> Int8,
@@ -48,7 +50,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     projects (id) {
         id -> Int4,
         message_id -> Int8,
@@ -64,7 +66,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     storage (id) {
         id -> Int4,
         datatype -> Int8,
@@ -74,7 +76,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     users (id) {
         id -> Int4,
         discordid -> Int8,
@@ -82,9 +84,21 @@ table! {
     }
 }
 
-joinable!(messages_edits -> messages (parrent_message_id));
+diesel::table! {
+    warnings (id) {
+        id -> Int4,
+        name -> Text,
+        email -> Text,
+        discord_id -> Text,
+        warning_date -> Timestamp,
+        event_name -> Nullable<Text>,
+        warning_reason -> Int4,
+    }
+}
 
-allow_tables_to_appear_in_same_query!(
+diesel::joinable!(messages_edits -> messages (parrent_message_id));
+
+diesel::allow_tables_to_appear_in_same_query!(
     airtable,
     events,
     invites,
@@ -93,4 +107,5 @@ allow_tables_to_appear_in_same_query!(
     projects,
     storage,
     users,
+    warnings,
 );
