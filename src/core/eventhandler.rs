@@ -126,7 +126,7 @@ impl EventHandler for Handler {
           mecleanup::check_mecleanup(&ctx, &reaction).await;
         }
         "⌚" => {
-          snooze_reaction(&ctx, &reaction, &emoji).await;
+          snooze_reaction(&ctx, &reaction).await;
         }
         _ => {}
       }

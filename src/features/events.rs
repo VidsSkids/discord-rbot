@@ -159,34 +159,32 @@ pub async fn check_events_loop(http: Arc<http::Http>) {
   }
 }
 
-pub async fn snooze_reaction(ctx: &Context, reaction: &Reaction, emoji: &str) {
-  if emoji == "⌚" {
-    let message = reaction.message(&ctx).await.unwrap();
-    let reaction_author = reaction.user(&ctx).await.unwrap().id;
-    let message_author = message.author.id;
-    let channel = message.channel_id;
-    let content = message.content.clone();
-    if content.starts_with(&format!("<@{}>", reaction_author.0))
-      && message_author.0 == ctx.cache.current_user_id().0
+pub async fn snooze_reaction(ctx: &Context, reaction: &Reaction) {
+  let message = reaction.message(&ctx).await.unwrap();
+  let reaction_author = reaction.user(&ctx).await.unwrap().id;
+  let message_author = message.author.id;
+  let channel = message.channel_id;
+  let content = message.content.clone();
+  if content.starts_with(&format!("<@{}>", reaction_author.0))
+    && message_author.0 == ctx.cache.current_user_id().0
+  {
     {
-      {
-        let mut snooze = SNOOZE.lock().unwrap();
-        if snooze.iter().cloned().any(|s| s.message_id == message.id.0) {
-          return;
-        }
-        snooze.push(RemindMeSnooze {
-          author: reaction_author.0,
-          channel: channel.0,
-          message_id: message.id.0,
-          content: content.replace(format!("<@{}>", reaction_author.0).as_str(), ""),
-        });
+      let mut snooze = SNOOZE.lock().unwrap();
+      if snooze.iter().cloned().any(|s| s.message_id == message.id.0) {
+        return;
       }
-      let message = channel
-        .say(&ctx.http, "Enter the new duration please")
-        .await
-        .unwrap();
-      SNOOZE_MESSAGE.lock().unwrap().push(message);
+      snooze.push(RemindMeSnooze {
+        author: reaction_author.0,
+        channel: channel.0,
+        message_id: message.id.0,
+        content: content.replace(format!("<@{}>", reaction_author.0).as_str(), ""),
+      });
     }
+    let message = channel
+      .say(&ctx.http, "Enter the new duration please")
+      .await
+      .unwrap();
+    SNOOZE_MESSAGE.lock().unwrap().push(message);
   }
 }
 
