@@ -143,6 +143,7 @@ pub struct Event {
   pub content: String,
   pub channel: i64,
   pub trigger_date: NaiveDateTime,
+  pub is_triggered: bool,
 }
 
 #[derive(Insertable, Debug)]

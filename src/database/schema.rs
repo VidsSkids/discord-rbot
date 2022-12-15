@@ -16,6 +16,7 @@ diesel::table! {
         content -> Varchar,
         channel -> Int8,
         trigger_date -> Timestamp,
+        is_triggered -> Bool,
     }
 }
 
@@ -47,6 +48,15 @@ diesel::table! {
         channel -> Int8,
         date -> Nullable<Timestamp>,
         parrent_message_id -> Int8,
+    }
+}
+
+diesel::table! {
+    notes (id) {
+        id -> Int4,
+        name -> Text,
+        date -> Timestamp,
+        note -> Nullable<Text>,
     }
 }
 
@@ -99,13 +109,14 @@ diesel::table! {
 diesel::joinable!(messages_edits -> messages (parrent_message_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-  airtable,
-  events,
-  invites,
-  messages,
-  messages_edits,
-  projects,
-  storage,
-  users,
-  warnings,
+    airtable,
+    events,
+    invites,
+    messages,
+    messages_edits,
+    notes,
+    projects,
+    storage,
+    users,
+    warnings,
 );

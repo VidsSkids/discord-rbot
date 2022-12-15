@@ -1,0 +1,2 @@
+ALTER TABLE events
+ ADD is_triggered BOOLEAN NOT NULL DEFAULT FALSE;

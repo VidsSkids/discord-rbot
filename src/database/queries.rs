@@ -247,18 +247,29 @@ impl Instance {
   db_load! {events_load, Event, events}
   db_add! {event_add, NewEvent, Event, events}
 
-  pub fn event_delete(&mut self, event_id: i32) {
+  // pub fn event_delete(&mut self, event_id: i32) {
+  //   use super::schema::events::dsl::*;
+
+  //   let conn = self.get_connection();
+
+  //   let filter = events.filter(id.eq(&event_id));
+  //   diesel::delete(filter)
+  //     .execute(&conn)
+  //     .expect("Diesel: Unable to delete storage");
+  //   let event_pos = self.events.iter().position(|e| e.id == event_id);
+  //   if let Some(pos) = event_pos {
+  //     self.events.remove(pos);
+  //   }
+  // }
+  pub fn event_triggered(&mut self, event_id: i32) {
     use super::schema::events::dsl::*;
 
     let conn = self.get_connection();
 
     let filter = events.filter(id.eq(&event_id));
-    diesel::delete(filter)
+    diesel::update(filter)
+      .set(is_triggered.eq(true))
       .execute(&conn)
-      .expect("Diesel: Unable to delete storage");
-    let event_pos = self.events.iter().position(|e| e.id == event_id);
-    if let Some(pos) = event_pos {
-      self.events.remove(pos);
-    }
+      .expect("Diesel: Unable to update event");
   }
 }

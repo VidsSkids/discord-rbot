@@ -11,7 +11,7 @@ use serenity::{
   http,
   model::{
     id::{ChannelId, UserId},
-    prelude::{Message, Reaction},
+    prelude::{Message, Reaction, ReactionType},
   },
   prelude::{Context, Mentionable},
 };
@@ -125,7 +125,8 @@ pub async fn check_events_loop(http: Arc<http::Http>) {
       let time_since_trigger = now - event.trigger_date;
       let event_id = event.id;
 
-      if time_since_trigger > Duration::seconds(0) {
+      info!("is trigger : {}", event.is_triggered);
+      if time_since_trigger > Duration::seconds(0) && !event.is_triggered {
         let http_clone = http.clone();
         // I don't known why i need to do this
         // The other threads just seem to die if i don't spawn here (the bot even disconnect)
@@ -143,6 +144,22 @@ pub async fn check_events_loop(http: Arc<http::Http>) {
             .await
             .expect("unable to send event");
           message.react(&http_clone, '⌚').await.unwrap();
+          message
+            .react(&http_clone, ReactionType::Unicode("1️⃣".to_string()))
+            .await
+            .unwrap();
+          message
+            .react(&http_clone, ReactionType::Unicode("2️⃣".to_string()))
+            .await
+            .unwrap();
+          message
+            .react(&http_clone, ReactionType::Unicode("3️⃣".to_string()))
+            .await
+            .unwrap();
+          message
+            .react(&http_clone, ReactionType::Unicode("4️⃣".to_string()))
+            .await
+            .unwrap();
         })
         .await;
         if let Err(e) = spawn_result {
@@ -150,7 +167,7 @@ pub async fn check_events_loop(http: Arc<http::Http>) {
         }
         {
           let mut db_instance = INSTANCE.write().unwrap();
-          db_instance.event_delete(event_id);
+          db_instance.event_triggered(event_id);
         }
       }
     }
@@ -201,6 +218,7 @@ pub async fn snooze_message(ctx: &Context, message: &Message) {
       let trigger_date: Option<DateTime<_>> = extract_date(&captures);
       if trigger_date.is_none() {
         snooze_send_error_message(&channel, message, &ctx.http).await;
+        return;
       }
       {
         let mut db_instance = INSTANCE.write().unwrap();
